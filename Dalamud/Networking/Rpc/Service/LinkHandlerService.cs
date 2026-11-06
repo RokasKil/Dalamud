@@ -95,13 +95,24 @@ internal class LinkHandlerService : IInternalDisposableService
     /// <summary>
     /// The RPC-invokable link handler.
     /// </summary>
-    /// <param name="uri">A plain-text URI to parse.</param>
-    public void HandleLinkCall(string uri)
+    /// <param name="request">Request object containing the URI.</param>
+    public void HandleLinkCall(LinkCallRequest request)
     {
-        if (string.IsNullOrWhiteSpace(uri))
+        if (string.IsNullOrWhiteSpace(request.Uri))
             return;
 
-        var du = DalamudUri.FromUri(uri);
+        var du = DalamudUri.FromUri(request.Uri);
         this.Dispatch(du);
     }
+}
+
+/// <summary>
+/// A request from a client for the link handler.
+/// </summary>
+internal record LinkCallRequest
+{
+    /// <summary>
+    /// Gets the plain-text URI to parse.
+    /// </summary>
+    public string Uri { get; init; } = string.Empty;
 }

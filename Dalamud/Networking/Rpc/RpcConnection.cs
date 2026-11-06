@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 using Dalamud.Networking.Rpc.Service;
 
 using Serilog;
+using SimpleJsonRpc;
+using SimpleJsonRpc.Data;
 
-using StreamJsonRpc;
 
 namespace Dalamud.Networking.Rpc;
 
@@ -30,12 +31,8 @@ internal class RpcConnection : IDisposable
         this.stream = stream;
         this.registry = registry;
 
-        var formatter = new JsonMessageFormatter();
-        var handler = new HeaderDelimitedMessageHandler(stream, stream, formatter);
-
-        this.Rpc = new JsonRpc(handler);
-        this.Rpc.AllowModificationWhileListening = true;
-        this.Rpc.Disconnected += this.OnDisconnected;
+        this.Rpc = new JsonRpc(stream);
+        this.Rpc.Completion.ContinueWith(async reason => this.OnDisconnected(await reason));
         this.registry.Attach(this.Rpc);
 
         this.Rpc.StartListening();
@@ -66,7 +63,7 @@ internal class RpcConnection : IDisposable
 
         try
         {
-            this.Rpc.Dispose();
+            this.Rpc.DisposeAsync().GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
@@ -86,9 +83,9 @@ internal class RpcConnection : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private void OnDisconnected(object? sender, JsonRpcDisconnectedEventArgs e)
+    private void OnDisconnected(JsonRpcShutdownReason reason)
     {
-        Log.Debug("RPC client {Id} disconnected: {Reason}", this.Id, e.Description);
+        Log.Debug("RPC client {Id} disconnected: {Reason}", this.Id, reason.Reason);
         this.registry.Detach(this.Rpc);
         this.Dispose();
     }

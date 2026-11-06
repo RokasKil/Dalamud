@@ -38,12 +38,6 @@ internal class RpcHostService : IServiceType, IInternalDisposableService
     public IReadOnlyList<IRpcTransport> Transports => this.transports;
 
     /// <summary>
-    /// Add a new service Object to the RPC host.
-    /// </summary>
-    /// <param name="service">The object to add.</param>
-    public void AddService(object service) => this.registry.AddService(service);
-
-    /// <summary>
     /// Add a new standalone method to the RPC host.
     /// </summary>
     /// <param name="name">The method name to add.</param>
@@ -62,18 +56,18 @@ internal class RpcHostService : IServiceType, IInternalDisposableService
     }
 
     /// <inheritdoc cref="IRpcTransport.InvokeClientAsync"/>
-    public async Task<T> InvokeClientAsync<T>(Guid clientId, string method, params object[] arguments)
+    public async Task<T> InvokeClientAsync<T>(Guid clientId, string method, object? arguments = null)
     {
         var clients = this.transports.SelectMany(t => t.Connections).ToImmutableDictionary();
 
         if (!clients.TryGetValue(clientId, out var session))
             throw new KeyNotFoundException($"No client {clientId}");
 
-        return await session.Rpc.InvokeAsync<T>(method, arguments).ConfigureAwait(false);
+        return await session.Rpc.Request<T>(method, arguments).ConfigureAwait(false);
     }
 
     /// <inheritdoc cref="IRpcTransport.BroadcastNotifyAsync"/>
-    public async Task BroadcastNotifyAsync(string method, params object[] arguments)
+    public async Task BroadcastNotifyAsync(string method, object? arguments = null)
     {
         await foreach (var transport in this.transports.ToAsyncEnumerable().ConfigureAwait(false))
         {

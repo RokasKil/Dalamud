@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dalamud.Data;
 using Dalamud.Game;
 using Dalamud.Game.ClientState;
+using Dalamud.Game.Player;
 using Dalamud.Utility;
 
 using Lumina.Excel.Sheets;
@@ -55,20 +56,17 @@ internal sealed class ClientHelloService : IInternalDisposableService
     {
         var framework = await Service<Framework>.GetAsync();
         var clientState = await Service<ClientState>.GetAsync();
+        var playerState = await Service<PlayerState>.GetAsync();
         var dataManager = await Service<DataManager>.GetAsync();
 
-        var clientIdentifier = $"FFXIV Process ${Environment.ProcessId}";
+        var clientIdentifier = $"FFXIV Process ${Environment.ProcessId}"; 
 
         await framework.RunOnFrameworkThread(() =>
         {
-            if (clientState.IsLoggedIn)
+            if (clientState.IsLoggedIn && playerState.IsLoaded) 
             {
-                var player = clientState.LocalPlayer;
-                if (player != null)
-                {
-                    var world = dataManager.GetExcelSheet<World>().GetRow(player.HomeWorld.RowId);
-                    clientIdentifier = $"Logged in as {player.Name.TextValue} @ {world.Name.ExtractText()}";
-                }
+                var world = playerState.HomeWorld;
+                clientIdentifier = $"Logged in as {playerState.CharacterName} @ {world}";
             }
             else
             {

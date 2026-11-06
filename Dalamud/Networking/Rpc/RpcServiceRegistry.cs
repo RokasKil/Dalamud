@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
-
-using StreamJsonRpc;
+using SimpleJsonRpc;
 
 namespace Dalamud.Networking.Rpc;
 
@@ -17,23 +16,6 @@ internal class RpcServiceRegistry
     private readonly List<JsonRpc> activeRpcs = [];
 
     /// <summary>
-    /// Registers a new local RPC target object. Its public JSON-RPC methods become callable by clients.
-    /// Adds <paramref name="service"/> to the registry and attaches it to all active RPC sessions.
-    /// </summary>
-    /// <param name="service">The service instance containing JSON-RPC callable methods to expose.</param>
-    public void AddService(object service)
-    {
-        lock (this.sync)
-        {
-            this.targets.Add(service);
-            foreach (var rpc in this.activeRpcs)
-            {
-                rpc.AddLocalRpcTarget(service);
-            }
-        }
-    }
-
-    /// <summary>
     /// Registers a new standalone JSON-RPC method.
     /// </summary>
     /// <param name="name">The name of the method to add.</param>
@@ -45,7 +27,7 @@ internal class RpcServiceRegistry
             this.methods.Add((name, handler));
             foreach (var rpc in this.activeRpcs)
             {
-                rpc.AddLocalRpcMethod(name, handler);
+                rpc.RegisterMethod(name, handler);
             }
         }
     }
@@ -59,14 +41,9 @@ internal class RpcServiceRegistry
         lock (this.sync)
         {
             this.activeRpcs.Add(rpc);
-            foreach (var t in this.targets)
-            {
-                rpc.AddLocalRpcTarget(t);
-            }
-
             foreach (var m in this.methods)
             {
-                rpc.AddLocalRpcMethod(m.Name, m.Handler);
+                rpc.RegisterMethod(m.Name, m.Handler);
             }
         }
     }

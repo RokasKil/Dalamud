@@ -100,25 +100,25 @@ internal class UnixRpcTransport : IRpcTransport
     /// <param name="arguments">Any arguments to invoke.</param>
     /// <returns>An optional return based on the specified RPC.</returns>
     /// <typeparam name="T">The expected response type.</typeparam>
-    public Task<T> InvokeClientAsync<T>(Guid clientId, string method, params object[] arguments)
+    public Task<T> InvokeClientAsync<T>(Guid clientId, string method, object? arguments = null)
     {
         if (!this.sessions.TryGetValue(clientId, out var session))
             throw new KeyNotFoundException($"No client {clientId}");
 
-        return session.Rpc.InvokeAsync<T>(method, arguments);
+        return session.Rpc.Request<T>(method, arguments);
     }
 
     /// <summary>Send a notification to all connected clients (no response expected).</summary>
     /// <param name="method">The method name to broadcast.</param>
     /// <param name="arguments">The arguments to broadcast.</param>
     /// <returns>Returns a Task when completed.</returns>
-    public Task BroadcastNotifyAsync(string method, params object[] arguments)
+    public Task BroadcastNotifyAsync(string method, object? arguments = null)
     {
         var list = this.sessions.Values;
         var tasks = new List<Task>(list.Count);
         foreach (var s in list)
         {
-            tasks.Add(s.Rpc.NotifyAsync(method, arguments));
+            tasks.Add(s.Rpc.Notify(method, arguments));
         }
 
         return Task.WhenAll(tasks);

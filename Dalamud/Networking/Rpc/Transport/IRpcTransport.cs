@@ -22,11 +22,11 @@ internal interface IRpcTransport : IDisposable
     /// <param name="arguments">Any arguments to invoke.</param>
     /// <returns>An optional return based on the specified RPC.</returns>
     /// <typeparam name="T">The expected response type.</typeparam>
-    Task<T> InvokeClientAsync<T>(Guid clientId, string method, params object[] arguments);
+    Task<T> InvokeClientAsync<T>(Guid clientId, string method, object? arguments = null);
 
     /// <summary>Send a notification to all connected clients (no response expected).</summary>
     /// <param name="method">The method name to broadcast.</param>
     /// <param name="arguments">The arguments to broadcast.</param>
     /// <returns>Returns a Task when completed.</returns>
-    Task BroadcastNotifyAsync(string method, params object[] arguments);
+    Task BroadcastNotifyAsync(string method, object? arguments = null);
 }
